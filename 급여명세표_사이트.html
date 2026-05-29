@@ -1,0 +1,803 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>직원 급여 명세표</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #f4f7fb;
+      --panel: #ffffff;
+      --ink: #1c2430;
+      --muted: #667085;
+      --line: #d9e1ec;
+      --brand: #1d6f8f;
+      --brand-dark: #155774;
+      --accent: #b75d2a;
+      --good: #227a48;
+      --soft: #e9f4f8;
+      --warn: #fff4e8;
+      --shadow: 0 16px 40px rgba(23, 42, 68, 0.11);
+      font-family: "Pretendard", "Apple SD Gothic Neo", "Malgun Gothic", Arial, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background: var(--bg);
+      color: var(--ink);
+    }
+
+    button,
+    input,
+    select {
+      font: inherit;
+    }
+
+    .app {
+      display: grid;
+      grid-template-columns: 320px minmax(0, 1fr);
+      min-height: 100vh;
+    }
+
+    .sidebar {
+      border-right: 1px solid var(--line);
+      background: #ffffff;
+      padding: 28px 22px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow: auto;
+    }
+
+    .brand {
+      margin-bottom: 22px;
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: 25px;
+      letter-spacing: 0;
+    }
+
+    .brand p {
+      margin: 8px 0 0;
+      color: var(--muted);
+      line-height: 1.5;
+      font-size: 14px;
+    }
+
+    .control {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 18px;
+    }
+
+    .control label {
+      font-weight: 700;
+      font-size: 14px;
+    }
+
+    select,
+    input[type="search"] {
+      width: 100%;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 11px 12px;
+      color: var(--ink);
+      outline: none;
+    }
+
+    select:focus,
+    input[type="search"]:focus {
+      border-color: var(--brand);
+      box-shadow: 0 0 0 3px rgba(29, 111, 143, 0.14);
+    }
+
+    .employee-list {
+      display: grid;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .employee-card {
+      width: 100%;
+      text-align: left;
+      border: 1px solid var(--line);
+      background: #fff;
+      border-radius: 8px;
+      padding: 11px 12px;
+      cursor: pointer;
+      color: var(--ink);
+    }
+
+    .employee-card:hover,
+    .employee-card.active {
+      border-color: var(--brand);
+      background: var(--soft);
+    }
+
+    .employee-card strong {
+      display: block;
+      font-size: 15px;
+      margin-bottom: 3px;
+    }
+
+    .employee-card span {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.4;
+    }
+
+    main {
+      padding: 34px;
+      overflow: auto;
+    }
+
+    .toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+
+    .toolbar h2 {
+      margin: 0;
+      font-size: 24px;
+      letter-spacing: 0;
+    }
+
+    .toolbar small {
+      color: var(--muted);
+      display: block;
+      margin-top: 6px;
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .button {
+      border: 0;
+      border-radius: 8px;
+      background: var(--brand);
+      color: #fff;
+      font-weight: 700;
+      padding: 11px 14px;
+      cursor: pointer;
+    }
+
+    .button.secondary {
+      background: #e8eef4;
+      color: var(--brand-dark);
+    }
+
+    .summary-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .metric,
+    .payslip,
+    .note {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+    }
+
+    .metric {
+      padding: 16px;
+      min-height: 96px;
+    }
+
+    .metric span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .metric strong {
+      display: block;
+      margin-top: 8px;
+      font-size: 22px;
+      letter-spacing: 0;
+      word-break: keep-all;
+    }
+
+    .metric.net strong {
+      color: var(--good);
+      font-size: 26px;
+    }
+
+    .payslip {
+      overflow: hidden;
+    }
+
+    .payslip-header {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 24px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(180deg, #ffffff, #f8fbfd);
+    }
+
+    .identity h3 {
+      margin: 0 0 8px;
+      font-size: 28px;
+      letter-spacing: 0;
+    }
+
+    .identity dl,
+    .totals dl {
+      display: grid;
+      grid-template-columns: auto 1fr;
+      gap: 6px 12px;
+      margin: 0;
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    dt {
+      font-weight: 700;
+      color: #42526a;
+    }
+
+    dd {
+      margin: 0;
+      color: var(--ink);
+    }
+
+    .totals {
+      min-width: 240px;
+      padding: 14px;
+      border-radius: 8px;
+      background: var(--soft);
+      border: 1px solid #c9e3ec;
+    }
+
+    .totals .amount {
+      display: block;
+      margin-top: 10px;
+      color: var(--good);
+      font-size: 30px;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+
+    .tables {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+      padding: 22px;
+    }
+
+    .section-title {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      margin-bottom: 9px;
+      gap: 12px;
+    }
+
+    .section-title h4 {
+      margin: 0;
+      font-size: 17px;
+      letter-spacing: 0;
+    }
+
+    .section-title span {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    th,
+    td {
+      border-bottom: 1px solid var(--line);
+      padding: 12px;
+      text-align: right;
+      font-size: 14px;
+      vertical-align: top;
+    }
+
+    th:first-child,
+    td:first-child {
+      text-align: left;
+    }
+
+    tr:last-child th,
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    tfoot th,
+    tfoot td {
+      background: #f7fafc;
+      font-weight: 800;
+    }
+
+    .note {
+      margin-top: 16px;
+      padding: 16px 18px;
+      color: #5e4730;
+      background: var(--warn);
+      border-color: #f3d4b5;
+      line-height: 1.65;
+      box-shadow: none;
+    }
+
+    .note strong {
+      color: #8a4317;
+    }
+
+    .empty {
+      padding: 20px;
+      color: var(--muted);
+      text-align: center;
+    }
+
+    @media (max-width: 980px) {
+      .app {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        position: static;
+        height: auto;
+      }
+
+      main {
+        padding: 22px;
+      }
+
+      .summary-grid,
+      .tables {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media (max-width: 700px) {
+      .toolbar,
+      .payslip-header {
+        display: grid;
+      }
+
+      .summary-grid,
+      .tables {
+        grid-template-columns: 1fr;
+      }
+
+      .actions {
+        justify-content: stretch;
+      }
+
+      .button {
+        flex: 1;
+      }
+
+      .totals {
+        min-width: 0;
+      }
+
+      th,
+      td {
+        padding: 10px;
+      }
+    }
+
+    @media print {
+      body {
+        background: #fff;
+      }
+
+      .app {
+        display: block;
+      }
+
+      .sidebar,
+      .toolbar .actions,
+      .note {
+        display: none;
+      }
+
+      main {
+        padding: 0;
+      }
+
+      .metric,
+      .payslip {
+        box-shadow: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="brand">
+        <h1>급여 명세표 조회</h1>
+        <p>사원명부_샘플30명.xlsx 기준으로 직원별 월 급여 명세를 확인합니다.</p>
+      </div>
+
+      <div class="control">
+        <label for="employeeSelect">직원 선택</label>
+        <select id="employeeSelect" aria-label="직원 선택"></select>
+      </div>
+
+      <div class="control">
+        <label for="searchInput">명부 검색</label>
+        <input id="searchInput" type="search" placeholder="이름, 부서, 사번">
+      </div>
+
+      <div id="employeeList" class="employee-list" aria-label="직원 명부"></div>
+    </aside>
+
+    <main>
+      <div class="toolbar">
+        <div>
+          <h2>2025년 기준 월 급여 명세표</h2>
+          <small>4대보험 요율과 소득세는 실습용 간이 계산입니다.</small>
+        </div>
+        <div class="actions">
+          <button class="button secondary" type="button" id="copySummary">요약 복사</button>
+          <button class="button" type="button" id="printSlip">인쇄</button>
+        </div>
+      </div>
+
+      <section class="summary-grid" aria-label="급여 요약">
+        <div class="metric">
+          <span>지급 총액</span>
+          <strong id="grossPay">0원</strong>
+        </div>
+        <div class="metric">
+          <span>공제 총액</span>
+          <strong id="deductionTotal">0원</strong>
+        </div>
+        <div class="metric">
+          <span>과세 기준액</span>
+          <strong id="taxableIncome">0원</strong>
+        </div>
+        <div class="metric net">
+          <span>실수령액</span>
+          <strong id="netPay">0원</strong>
+        </div>
+      </section>
+
+      <section class="payslip" aria-label="급여 명세표">
+        <div class="payslip-header">
+          <div class="identity">
+            <h3 id="employeeName">직원명</h3>
+            <dl>
+              <dt>사번</dt><dd id="employeeId"></dd>
+              <dt>부서</dt><dd id="department"></dd>
+              <dt>직급</dt><dd id="position"></dd>
+              <dt>입사일</dt><dd id="hireDate"></dd>
+            </dl>
+          </div>
+          <div class="totals">
+            <dl>
+              <dt>계약연봉</dt><dd id="annualSalary"></dd>
+              <dt>예상 인센티브</dt><dd id="annualIncentive"></dd>
+              <dt>부양가족</dt><dd id="dependents"></dd>
+            </dl>
+            <span class="amount" id="headerNetPay">0원</span>
+          </div>
+        </div>
+
+        <div class="tables">
+          <div>
+            <div class="section-title">
+              <h4>지급 항목</h4>
+              <span>월 기준</span>
+            </div>
+            <table>
+              <tbody id="earningRows"></tbody>
+              <tfoot>
+                <tr>
+                  <th>지급 합계</th>
+                  <td id="earningTotal">0원</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+
+          <div>
+            <div class="section-title">
+              <h4>공제 항목</h4>
+              <span>근로자 부담</span>
+            </div>
+            <table>
+              <tbody id="deductionRows"></tbody>
+              <tfoot>
+                <tr>
+                  <th>공제 합계</th>
+                  <td id="deductionTableTotal">0원</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <p class="note">
+        <strong>계산 기준:</strong> 기본급은 계약연봉/12, 월 인센티브는 예상 인센티브/12로 계산했습니다.
+        과세 기준액은 지급액에서 월 비과세 식대와 자가운전보조금을 제외한 금액입니다.
+        소득세는 간이세액표 원문이 아닌 실습용 누진세율 추정치이므로 최종 급여 확정에는 세무·노무 검토가 필요합니다.
+      </p>
+    </main>
+  </div>
+
+  <script>
+    const employees = [
+      { employeeId: "NT2021001", name: "최서연", department: "영업팀", position: "주임", hireDate: "2021-04-05", annualSalary: 70160000, incentive: 2040000, mealAllowance: 200000, carAllowance: 200000, dependents: 0 },
+      { employeeId: "NT2022002", name: "서민준", department: "개발팀", position: "사원", hireDate: "2022-04-08", annualSalary: 65690000, incentive: 7160000, mealAllowance: 200000, carAllowance: 0, dependents: 1 },
+      { employeeId: "NT2023003", name: "서수아", department: "인사팀", position: "차장", hireDate: "2023-05-26", annualSalary: 40260000, incentive: 2630000, mealAllowance: 200000, carAllowance: 200000, dependents: 2 },
+      { employeeId: "NT2024004", name: "장도윤", department: "프로덕트매니저팀", position: "대리", hireDate: "2024-02-03", annualSalary: 60560000, incentive: 1990000, mealAllowance: 200000, carAllowance: 0, dependents: 2 },
+      { employeeId: "NT2025005", name: "장수빈", department: "개발팀", position: "과장", hireDate: "2025-09-04", annualSalary: 60500000, incentive: 1800000, mealAllowance: 200000, carAllowance: 200000, dependents: 2 },
+      { employeeId: "NT2020006", name: "조선우", department: "AI연구개발팀", position: "사원", hireDate: "2020-11-08", annualSalary: 86660000, incentive: 3960000, mealAllowance: 200000, carAllowance: 200000, dependents: 1 },
+      { employeeId: "NT2021007", name: "최서윤", department: "영업팀", position: "과장", hireDate: "2021-11-27", annualSalary: 54940000, incentive: 2660000, mealAllowance: 200000, carAllowance: 0, dependents: 1 },
+      { employeeId: "NT2022008", name: "장선우", department: "AI연구개발팀", position: "차장", hireDate: "2022-11-06", annualSalary: 76870000, incentive: 3500000, mealAllowance: 200000, carAllowance: 0, dependents: 3 },
+      { employeeId: "NT2023009", name: "장유나", department: "재무팀", position: "주임", hireDate: "2023-11-11", annualSalary: 44290000, incentive: 3340000, mealAllowance: 200000, carAllowance: 200000, dependents: 2 },
+      { employeeId: "NT2024010", name: "신시우", department: "AI연구개발팀", position: "주임", hireDate: "2024-10-23", annualSalary: 67880000, incentive: 3170000, mealAllowance: 200000, carAllowance: 200000, dependents: 3 },
+      { employeeId: "NT2025011", name: "권지우", department: "영업팀", position: "주임", hireDate: "2025-04-24", annualSalary: 62990000, incentive: 6510000, mealAllowance: 200000, carAllowance: 0, dependents: 3 },
+      { employeeId: "NT2020012", name: "신지호", department: "프로덕트매니저팀", position: "주임", hireDate: "2020-09-16", annualSalary: 48720000, incentive: 1480000, mealAllowance: 200000, carAllowance: 200000, dependents: 1 },
+      { employeeId: "NT2021013", name: "강수빈", department: "CS팀", position: "차장", hireDate: "2021-02-13", annualSalary: 42810000, incentive: 7100000, mealAllowance: 200000, carAllowance: 200000, dependents: 2 },
+      { employeeId: "NT2022014", name: "김건우", department: "AI연구개발팀", position: "차장", hireDate: "2022-05-25", annualSalary: 81250000, incentive: 4480000, mealAllowance: 200000, carAllowance: 0, dependents: 3 },
+      { employeeId: "NT2023015", name: "강지민", department: "개발팀", position: "대리", hireDate: "2023-09-25", annualSalary: 52310000, incentive: 6190000, mealAllowance: 200000, carAllowance: 200000, dependents: 2 },
+      { employeeId: "NT2024016", name: "조도윤", department: "마케팅팀", position: "주임", hireDate: "2024-09-25", annualSalary: 59720000, incentive: 1000000, mealAllowance: 200000, carAllowance: 200000, dependents: 3 },
+      { employeeId: "NT2025017", name: "김지유", department: "마케팅팀", position: "대리", hireDate: "2025-04-02", annualSalary: 47860000, incentive: 6800000, mealAllowance: 200000, carAllowance: 200000, dependents: 0 },
+      { employeeId: "NT2020018", name: "황성민", department: "AI연구개발팀", position: "차장", hireDate: "2020-03-05", annualSalary: 82020000, incentive: 5860000, mealAllowance: 200000, carAllowance: 200000, dependents: 1 },
+      { employeeId: "NT2021019", name: "장예린", department: "총무팀", position: "과장", hireDate: "2021-04-18", annualSalary: 50460000, incentive: 3050000, mealAllowance: 200000, carAllowance: 200000, dependents: 3 },
+      { employeeId: "NT2022020", name: "오우진", department: "재무팀", position: "과장", hireDate: "2022-02-08", annualSalary: 51200000, incentive: 1650000, mealAllowance: 200000, carAllowance: 0, dependents: 1 },
+      { employeeId: "NT2023021", name: "윤서연", department: "AI연구개발팀", position: "사원", hireDate: "2023-04-03", annualSalary: 56280000, incentive: 4380000, mealAllowance: 200000, carAllowance: 0, dependents: 1 },
+      { employeeId: "NT2024022", name: "장건우", department: "인사팀", position: "주임", hireDate: "2024-09-05", annualSalary: 63380000, incentive: 6900000, mealAllowance: 200000, carAllowance: 0, dependents: 3 },
+      { employeeId: "NT2025023", name: "서수아", department: "AI연구개발팀", position: "사원", hireDate: "2025-11-14", annualSalary: 69510000, incentive: 5330000, mealAllowance: 200000, carAllowance: 0, dependents: 0 },
+      { employeeId: "NT2020024", name: "최민준", department: "CS팀", position: "대리", hireDate: "2020-02-08", annualSalary: 38920000, incentive: 2940000, mealAllowance: 200000, carAllowance: 200000, dependents: 1 },
+      { employeeId: "NT2021025", name: "서지우", department: "영업팀", position: "과장", hireDate: "2021-04-28", annualSalary: 43080000, incentive: 5530000, mealAllowance: 200000, carAllowance: 200000, dependents: 0 },
+      { employeeId: "NT2022026", name: "이건우", department: "재무팀", position: "사원", hireDate: "2022-02-25", annualSalary: 51680000, incentive: 2700000, mealAllowance: 200000, carAllowance: 0, dependents: 3 },
+      { employeeId: "NT2023027", name: "조채원", department: "CS팀", position: "사원", hireDate: "2023-03-13", annualSalary: 35040000, incentive: 4990000, mealAllowance: 200000, carAllowance: 0, dependents: 3 },
+      { employeeId: "NT2024028", name: "임준우", department: "재무팀", position: "과장", hireDate: "2024-03-07", annualSalary: 54150000, incentive: 3220000, mealAllowance: 200000, carAllowance: 200000, dependents: 0 },
+      { employeeId: "NT2025029", name: "한서연", department: "개발팀", position: "차장", hireDate: "2025-08-17", annualSalary: 66750000, incentive: 2610000, mealAllowance: 200000, carAllowance: 0, dependents: 0 },
+      { employeeId: "NT2020030", name: "강서준", department: "총무팀", position: "사원", hireDate: "2020-11-28", annualSalary: 39810000, incentive: 5130000, mealAllowance: 200000, carAllowance: 0, dependents: 1 }
+    ];
+
+    const rates = {
+      pension: 0.045,
+      health: 0.03545,
+      longTermCare: 0.1295,
+      employment: 0.009,
+      pensionMin: 370000,
+      pensionMax: 5900000
+    };
+
+    const $ = (id) => document.getElementById(id);
+    const money = (value) => `${Math.round(value).toLocaleString("ko-KR")}원`;
+    const month = new Intl.DateTimeFormat("ko-KR", { year: "numeric", month: "long" }).format(new Date());
+
+    function calculate(employee) {
+      const baseSalary = employee.annualSalary / 12;
+      const monthlyIncentive = employee.incentive / 12;
+      const mealNonTax = Math.min(employee.mealAllowance, 200000);
+      const carNonTax = Math.min(employee.carAllowance, 200000);
+      const nonTaxTotal = mealNonTax + carNonTax;
+      const grossPay = baseSalary + monthlyIncentive + nonTaxTotal;
+      const taxableIncome = Math.max(baseSalary + monthlyIncentive - nonTaxTotal, 0);
+      const pensionBase = Math.min(Math.max(taxableIncome, rates.pensionMin), rates.pensionMax);
+      const pension = pensionBase * rates.pension;
+      const health = taxableIncome * rates.health;
+      const longTermCare = health * rates.longTermCare;
+      const employment = taxableIncome * rates.employment;
+      const incomeTax = estimateIncomeTax(taxableIncome, employee.dependents);
+      const localTax = incomeTax * 0.1;
+      const deductionTotal = pension + health + longTermCare + employment + incomeTax + localTax;
+      const netPay = grossPay - deductionTotal;
+
+      return {
+        baseSalary,
+        monthlyIncentive,
+        mealNonTax,
+        carNonTax,
+        nonTaxTotal,
+        grossPay,
+        taxableIncome,
+        pension,
+        health,
+        longTermCare,
+        employment,
+        incomeTax,
+        localTax,
+        deductionTotal,
+        netPay
+      };
+    }
+
+    function estimateIncomeTax(monthlyTaxableIncome, dependents) {
+      const annualIncome = monthlyTaxableIncome * 12;
+      const earnedIncomeDeduction = Math.min(annualIncome * 0.25, 12000000);
+      const personalDeduction = (1 + dependents) * 1500000;
+      const taxBase = Math.max(annualIncome - earnedIncomeDeduction - personalDeduction, 0);
+      const annualTax = progressiveTax(taxBase);
+      return annualTax / 12;
+    }
+
+    function progressiveTax(taxBase) {
+      if (taxBase <= 14000000) return taxBase * 0.06;
+      if (taxBase <= 50000000) return taxBase * 0.15 - 1260000;
+      if (taxBase <= 88000000) return taxBase * 0.24 - 5760000;
+      if (taxBase <= 150000000) return taxBase * 0.35 - 15440000;
+      if (taxBase <= 300000000) return taxBase * 0.38 - 19940000;
+      if (taxBase <= 500000000) return taxBase * 0.40 - 25940000;
+      if (taxBase <= 1000000000) return taxBase * 0.42 - 35940000;
+      return taxBase * 0.45 - 65940000;
+    }
+
+    function renderOptions() {
+      $("employeeSelect").innerHTML = employees
+        .map((employee) => `<option value="${employee.employeeId}">${employee.name} · ${employee.department} · ${employee.employeeId}</option>`)
+        .join("");
+    }
+
+    function renderEmployeeList(filterText = "") {
+      const normalized = filterText.trim().toLowerCase();
+      const visibleEmployees = employees.filter((employee) => {
+        const haystack = `${employee.employeeId} ${employee.name} ${employee.department} ${employee.position}`.toLowerCase();
+        return haystack.includes(normalized);
+      });
+
+      if (visibleEmployees.length === 0) {
+        $("employeeList").innerHTML = '<div class="empty">검색 결과가 없습니다.</div>';
+        return;
+      }
+
+      $("employeeList").innerHTML = visibleEmployees.map((employee) => `
+        <button class="employee-card" type="button" data-employee-id="${employee.employeeId}">
+          <strong>${employee.name}</strong>
+          <span>${employee.department} · ${employee.position} · ${employee.employeeId}</span>
+        </button>
+      `).join("");
+
+      document.querySelectorAll(".employee-card").forEach((button) => {
+        button.addEventListener("click", () => {
+          setSelectedEmployee(button.dataset.employeeId);
+        });
+      });
+
+      updateActiveCard($("employeeSelect").value);
+    }
+
+    function setSelectedEmployee(employeeId) {
+      $("employeeSelect").value = employeeId;
+      renderPayslip(employeeId);
+      updateActiveCard(employeeId);
+    }
+
+    function updateActiveCard(employeeId) {
+      document.querySelectorAll(".employee-card").forEach((button) => {
+        button.classList.toggle("active", button.dataset.employeeId === employeeId);
+      });
+    }
+
+    function renderPayslip(employeeId) {
+      const employee = employees.find((item) => item.employeeId === employeeId) || employees[0];
+      const result = calculate(employee);
+      const earnings = [
+        ["기본급", result.baseSalary],
+        ["월 인센티브", result.monthlyIncentive],
+        ["식대(비과세)", result.mealNonTax],
+        ["자가운전보조금(비과세)", result.carNonTax]
+      ];
+      const deductions = [
+        ["국민연금 4.5%", result.pension],
+        ["건강보험 3.545%", result.health],
+        ["장기요양보험", result.longTermCare],
+        ["고용보험 0.9%", result.employment],
+        ["소득세(간이)", result.incomeTax],
+        ["지방소득세", result.localTax]
+      ];
+
+      $("employeeName").textContent = `${employee.name} 급여 명세표`;
+      $("employeeId").textContent = employee.employeeId;
+      $("department").textContent = employee.department;
+      $("position").textContent = employee.position;
+      $("hireDate").textContent = employee.hireDate;
+      $("annualSalary").textContent = money(employee.annualSalary);
+      $("annualIncentive").textContent = money(employee.incentive);
+      $("dependents").textContent = `${employee.dependents}명`;
+      $("grossPay").textContent = money(result.grossPay);
+      $("deductionTotal").textContent = money(result.deductionTotal);
+      $("taxableIncome").textContent = money(result.taxableIncome);
+      $("netPay").textContent = money(result.netPay);
+      $("headerNetPay").textContent = money(result.netPay);
+      $("earningTotal").textContent = money(result.grossPay);
+      $("deductionTableTotal").textContent = money(result.deductionTotal);
+
+      $("earningRows").innerHTML = earnings.map(([label, value]) => `
+        <tr>
+          <th>${label}</th>
+          <td>${money(value)}</td>
+        </tr>
+      `).join("");
+
+      $("deductionRows").innerHTML = deductions.map(([label, value]) => `
+        <tr>
+          <th>${label}</th>
+          <td>${money(value)}</td>
+        </tr>
+      `).join("");
+    }
+
+    function copyCurrentSummary() {
+      const employee = employees.find((item) => item.employeeId === $("employeeSelect").value);
+      const result = calculate(employee);
+      const text = [
+        `[${month} 급여명세]`,
+        `직원: ${employee.name} (${employee.employeeId})`,
+        `부서/직급: ${employee.department} / ${employee.position}`,
+        `지급총액: ${money(result.grossPay)}`,
+        `공제총액: ${money(result.deductionTotal)}`,
+        `실수령액: ${money(result.netPay)}`
+      ].join("\n");
+
+      copyText(text).then(() => {
+        $("copySummary").textContent = "복사 완료";
+        setTimeout(() => {
+          $("copySummary").textContent = "요약 복사";
+        }, 1200);
+      });
+    }
+
+    async function copyText(text) {
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+        return;
+      }
+
+      const textarea = document.createElement("textarea");
+      textarea.value = text;
+      textarea.setAttribute("readonly", "");
+      textarea.style.position = "fixed";
+      textarea.style.left = "-9999px";
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand("copy");
+      textarea.remove();
+    }
+
+    renderOptions();
+    renderEmployeeList();
+    renderPayslip(employees[0].employeeId);
+
+    $("employeeSelect").addEventListener("change", (event) => {
+      setSelectedEmployee(event.target.value);
+    });
+
+    $("searchInput").addEventListener("input", (event) => {
+      renderEmployeeList(event.target.value);
+    });
+
+    $("printSlip").addEventListener("click", () => window.print());
+    $("copySummary").addEventListener("click", copyCurrentSummary);
+  </script>
+</body>
+</html>
